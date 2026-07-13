@@ -1,0 +1,126 @@
+# Configuration that is true in every environment.
+#
+# Profile files (development.yaml, production.yaml) are deep-merged on top of
+# this one, so they only restate what actually differs.
+#
+# Secrets are REFERENCED here, never contained. ${VAR} is required and fails the
+# boot if unset; ${VAR:-default} is optional. This file is safe to commit.
+
+app:
+  name: sarb-app
+
+server:
+  host: 127.0.0.1
+  port: 8000
+
+logging:
+  level: INFO
+  format: json
+
+telemetry:
+  enabled: false
+
+# How every component behaves when the thing behind it misbehaves. Retry is on by
+# default: the alternative is not "no retry", it is a retry loop hand-written into
+# every engine by whoever hit a 429 first. Override it per component in its own block.
+resilience:
+  max_attempts: 3
+  initial_backoff: 0.5
+  max_backoff: 30.0
+
+# What the models cost, in USD per MILLION tokens — the unit every vendor prints on its
+# pricing page, so these are numbers you can copy rather than numbers you must convert.
+#
+# Configuration and not code, because a price list is the most perishable fact in this
+# whole system: vendors cut prices, add tiers, and sign contracts, and none of that
+# should need a release of the framework. Nested under the provider because a model name
+# is not unique — `llama3` on your own hardware is free, and the same name behind a
+# hosted API is not.
+#
+# A model with no entry here still records its tokens. It just records no cost, and says
+# so once, in a warning — because a zero would be a lie that sums.
+pricing:
+  anthropic:
+    claude-sonnet-5:
+      input: 3.00
+      output: 15.00
+      cached_input: 0.30 # a tenth, which is the point of caching
+      cache_write_input: 3.75 # a quarter more, which is the price of it
+    claude-haiku-4-5:
+      input: 1.00
+      output: 5.00
+      cached_input: 0.10
+      cache_write_input: 1.25
+  openai:
+    text-embedding-3-small:
+      input: 0.02 # embeddings have no output to bill
+
+# Component families. Each entry names an adapter (`provider`) plus options that
+# only that adapter understands — the kernel never validates them itself.
+#
+# Uncomment as the corresponding modules land.
+
+# The defaults are the providers that need no key and no network, so that a fresh
+# checkout boots. A profile overrides them with something real — see
+# production.yaml, and note that swapping a vendor is only ever this: a `provider`
+# key and the options that go with it.
+
+llms:
+  default:
+    provider: fake
+    options:
+      responses: ["This is a fake response."]
+
+embedders:
+  default:
+    provider: fake
+    options:
+      dimensions: 384
+
+# `memory` is a real store — exact search, the whole filter algebra — that happens to
+# live in this process. It is what makes a laptop enough. It is also O(n) per query and
+# forgets everything on restart, so production says something else.
+vector_stores:
+  default:
+    provider: memory
+    options:
+      collection: documents
+
+# Real ones look like this:
+#
+# llms:
+#   default:
+#     provider: anthropic
+#     options:
+#       model: claude-sonnet-5
+#       api_key: ${ANTHROPIC_API_KEY}
+#   fast:
+#     provider: anthropic
+#     options:
+#       model: claude-haiku-4-5
+#       api_key: ${ANTHROPIC_API_KEY}
+#
+# embedders:
+#   default:
+#     provider: fastembed
+#     options:
+#       model: BAAI/bge-small-en-v1.5
+#       # No `dimensions`: FastEmbed knows how wide its own models are, and the
+#       # adapter asks it. A hosted API cannot be asked, so there it is required.
+
+# vector_stores:
+#   default:
+#     provider: qdrant
+#     options:
+#       url: ${QDRANT_URL:-http://localhost:6333}
+#       api_key: ${QDRANT_API_KEY}
+#       collection: documents
+#
+# ...or, if you would rather not run a second database:
+#
+# vector_stores:
+#   default:
+#     provider: pgvector
+#     options:
+#       dsn: ${DATABASE_URL}
+#       collection: documents

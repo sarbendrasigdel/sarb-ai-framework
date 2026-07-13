@@ -1,0 +1,7 @@
+# Normalise line endings. The framework is developed on Windows and runs in Linux
+# containers; without this, every file round-trips through a spurious diff.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary

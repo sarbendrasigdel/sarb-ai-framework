@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "1"
+
+jobs:
+  quality:
+    name: Lint, types, tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --all-extras --group dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Type check
+        run: uv run mypy
+
+      # The architecture tests are the ones that keep Clean Architecture from
+      # eroding, so they run as their own step: a dependency-rule violation must
+      # be legible in the CI summary, not buried in a wall of unit-test output.
+      - name: Architecture
+        run: uv run pytest tests/architecture -q
+
+      - name: Tests
+        run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.xml
+
+  core-install:
+    name: Core installs without extras
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      # A framework whose core secretly needs a vendor SDK is not a framework.
+      # This job fails the moment an unguarded vendor import lands in the core.
+      - name: Install core only and import it
+        run: |
+          uv venv
+          uv pip install .
+          uv run python -c "import sarb; from sarb.config import load_settings; load_settings()"
+
+  docs:
+    name: Docs build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install
+        run: uv sync --group docs
+
+      - name: Build
+        run: uv run mkdocs build --strict

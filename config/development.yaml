@@ -1,0 +1,9 @@
+# Local development. Merged on top of base.yaml.
+
+app:
+  environment: development
+  debug: true
+
+logging:
+  level: DEBUG
+  format: console # human-readable; production stays on json

@@ -1,0 +1,31 @@
+# Production. Merged on top of base.yaml.
+#
+# Note what is absent: no credentials. They arrive through the environment, and
+# `${VAR}` without a default means the process refuses to boot without them —
+# which is the intended behaviour, not an inconvenience.
+
+app:
+  environment: production
+  debug: false # rejected at load if true in production
+
+server:
+  host: 0.0.0.0
+  port: ${PORT:-8000}
+
+logging:
+  level: INFO
+  format: json
+
+telemetry:
+  enabled: true
+  service_name: sarb
+  endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+  sample_ratio: 0.1
+  capture_prompts: false # prompts contain user data; keep them out of traces
+
+database:
+  dsn: ${DATABASE_URL}
+  pool_max_size: 20
+
+redis:
+  url: ${REDIS_URL}

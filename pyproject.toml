@@ -1,0 +1,245 @@
+[project]
+name = "sarb"
+version = "0.1.0"
+description = "A modular, production-grade framework for building AI agent applications."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+authors = [{ name = "Sarbendra Sigdel", email = "sarbendrasigdel@gmail.com" }]
+keywords = ["ai", "agents", "rag", "llm", "framework"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+
+# The core stays deliberately small: everything here must be safe to install in
+# any environment (a lambda, a notebook, a CI runner) without pulling a GPU
+# stack or a vendor SDK. Heavy or vendor-specific dependencies live in extras.
+dependencies = [
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "pyyaml>=6.0.2",
+    "anyio>=4.4",
+]
+
+[project.optional-dependencies]
+# --- LLM providers -----------------------------------------------------------
+openai = ["openai>=1.50"]
+anthropic = ["anthropic>=0.40"]
+gemini = ["google-genai>=0.3"]
+ollama = ["httpx>=0.27"]
+
+# --- Embedding providers -----------------------------------------------------
+fastembed = ["fastembed>=0.4"]
+sentence-transformers = ["sentence-transformers>=3.1"]
+
+# --- Vector stores -----------------------------------------------------------
+qdrant = ["qdrant-client>=1.12"]
+pgvector = ["asyncpg>=0.29", "pgvector>=0.3"]
+
+# --- Infrastructure ----------------------------------------------------------
+postgres = ["asyncpg>=0.29"]
+redis = ["redis>=5.1"]
+
+# --- Delivery ----------------------------------------------------------------
+api = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "python-multipart>=0.0.12"]
+cli = ["typer>=0.12", "rich>=13.8"]
+
+# --- Observability -----------------------------------------------------------
+telemetry = [
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-http>=1.27",
+]
+
+# Convenience meta-extra for local development of the whole platform.
+all = [
+    "sarb[openai,anthropic,gemini,ollama]",
+    "sarb[fastembed,sentence-transformers]",
+    "sarb[qdrant,pgvector,postgres,redis]",
+    "sarb[api,cli,telemetry]",
+]
+
+# [project.scripts] is deliberately absent until `sarb.cli` exists.
+#
+# Declaring `sarb = "sarb.cli.__main__:main"` here puts a `sarb` command on the PATH
+# of everyone who installs the wheel — and if the module behind it is not there, that
+# command is a ModuleNotFoundError with the framework's name on it. A console script
+# is a promise made by the package metadata, and it is kept by shipping the module,
+# not by writing the line early.
+
+[project.entry-points."sarb.plugins"]
+# Built-in providers register themselves through the same public plugin
+# mechanism third parties use. No privileged path for first-party code.
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
+    "mypy>=1.11",
+    "ruff>=0.6",
+    "types-pyyaml>=6.0",
+]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.26",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sarb"]
+
+# -----------------------------------------------------------------------------
+# Linting & formatting
+# -----------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",      # pycodestyle
+    "F",           # pyflakes
+    "I",           # isort
+    "N",           # pep8-naming
+    "D",           # pydocstyle
+    "UP",          # pyupgrade
+    "ANN",         # flake8-annotations
+    "ASYNC",       # flake8-async
+    "B",           # flake8-bugbear
+    "A",           # flake8-builtins
+    "C4",          # flake8-comprehensions
+    "DTZ",         # flake8-datetimez
+    "T20",         # flake8-print
+    "PT",          # flake8-pytest-style
+    "RET",         # flake8-return
+    "SIM",         # flake8-simplify
+    "TID",         # flake8-tidy-imports
+    "ARG",         # flake8-unused-arguments
+    "PTH",         # flake8-use-pathlib
+    "ERA",         # eradicate
+    "PL",          # pylint
+    "TRY",         # tryceratops
+    "RUF",         # ruff-specific
+]
+ignore = [
+    "D107",    # __init__ docstring: covered by the class docstring
+    "D203",    # incompatible with D211
+    "D213",    # incompatible with D212
+    "TRY003",  # long messages outside exception class: our errors are context-rich by design
+    "PLR0913", # many arguments: adapters legitimately take many config knobs
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests: docstrings and annotations are ceremony here, and unused fixture/lambda
+# arguments (`ctx`, `c`) are how test doubles match a required signature.
+"tests/**" = ["D100", "D101", "D102", "D103", "D104", "ANN", "ARG", "PLR2004", "S101", "TRY301"]
+# Provider tests import a vendor SDK to build fixtures from the vendor's *own*
+# response models — which is the point: a hand-written fixture can be wrong in the
+# same way the adapter is wrong, and the two will agree with each other forever.
+# `pytest.importorskip` has to run before that import, so the import cannot be at
+# the top of the file. E402 is unavoidable here, not sloppiness.
+"tests/unit/providers/llm/test_anthropic.py" = ["E402"]
+"tests/unit/providers/llm/test_openai.py" = ["E402"]
+"tests/unit/providers/llm/test_gemini.py" = ["E402"]
+"tests/unit/providers/llm/test_ollama.py" = ["E402"]
+# The container is heterogeneous by nature: it stores and returns objects whose
+# type is only known to the caller. `Any` is the honest annotation there, and
+# every public entry point re-narrows it through overloads.
+"src/sarb/di/container.py" = ["ANN401"]
+# Structured logging, tracing and redaction take arbitrary user values by
+# definition: `logger.info("done", tokens=812, model=...)`. `**fields: Any` is
+# the correct signature, not a lapse — narrowing it would mean the framework
+# dictating what an application is allowed to log about itself.
+"src/sarb/contracts/observability.py" = ["ANN401"]
+"src/sarb/observability/*" = ["ANN401"]
+"src/sarb/redaction.py" = ["ANN401"]
+# Message constructors pass **kwargs through to the model, and workflow step
+# arguments are genuinely arbitrary JSON.
+"src/sarb/contracts/message.py" = ["ANN401"]
+"src/sarb/contracts/base.py" = ["ANN401"]
+# `wrap` takes a component of some port and returns a component of the same port. The
+# type checker cannot express "the same protocol, differently implemented" without
+# knowing which port, and the whole point of the middleware is that it does not know.
+# Same honest `Any` as the container, and for the same reason.
+"src/sarb/middleware/__init__.py" = ["ANN401"]
+# Adapters translate payloads whose types live behind an optional extra. Annotating
+# them with the vendor's own classes would make `mypy` — and so CI, and so every
+# contributor's checkout — require every vendor SDK to be installed, which is
+# exactly the coupling the extras exist to prevent. `Any` is the honest annotation
+# at the SDK boundary; everything crossing back into the framework is a validated
+# model from `sarb.contracts`, and that is where the type safety is.
+"src/sarb/providers/**" = ["ANN401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+# -----------------------------------------------------------------------------
+# Type checking
+# -----------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+disallow_any_generics = true
+plugins = ["pydantic.mypy"]
+files = ["src", "tests"]
+
+# `type-abstract` fires whenever a Protocol class is passed as a value, e.g.
+# `Family("llms", LLMProvider)` or `container.bind(Clock, ...)`. Ports in this
+# framework are always Protocols, and treating them as first-class values is the
+# entire mechanism by which the DI container stays type-safe. The check is
+# guarding against instantiating an abstract class, which we never do.
+disable_error_code = ["type-abstract"]
+
+# Tests are type-checked, but not held to the annotation rules that exist to make
+# a *public API* self-describing. A test function returns None and says so by
+# being a test; forcing `-> None` on 200 of them is ceremony, not safety.
+[[tool.mypy.overrides]]
+module = ["tests", "tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+# Follows from the three above: permitting untyped test helpers while forbidding
+# calls to them would leave the permission useless.
+disallow_untyped_calls = false
+
+# -----------------------------------------------------------------------------
+# Tests
+# -----------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+markers = [
+    "integration: requires external services (postgres, redis, qdrant)",
+    "slow: takes more than a second",
+]
+
+[tool.coverage.run]
+source = ["src/sarb"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]

@@ -1,0 +1,72 @@
+site_name: sarb
+site_description: A modular framework for building production AI agent applications.
+repo_url: https://github.com/sarbendra/sarb
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+
+nav:
+  - Home: index.md
+  - Tutorial: tutorial.md
+  - Distribution: distribution.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - The ports: architecture/ports.md
+  - Modules:
+      - Configuration: modules/configuration.md
+      - Observability: modules/observability.md
+      - Dependency injection: modules/dependency-injection.md
+      - Plugin system: modules/plugins.md
+      - LLM providers: modules/llm-providers.md
+      - Embedding providers: modules/embeddings.md
+      - Vector stores: modules/vector-stores.md
+      - Middleware (retry + telemetry): modules/middleware.md
+      - Token usage and cost: modules/usage-and-cost.md
+  - Contributing:
+      - Onboarding: contributing/onboarding.md
+      - Your first contribution: contributing/your-first-contribution.md
+      - Testing: contributing/testing.md
+      - Conventions: contributing/conventions.md
