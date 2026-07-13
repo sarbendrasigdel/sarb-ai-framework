@@ -22,8 +22,19 @@ Wiring happens once, from configuration, in the DI container. It is enforced by
 an automated test, not by convention.
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
 from sarb.errors import SarbError
 
-__version__ = "0.1.0"
+try:
+    __version__ = version("sarb")
+except PackageNotFoundError:  # pragma: no cover - only when running from a bare checkout
+    # Not installed — a source tree being read directly, which is what the test suite and
+    # `python -m` do. There is no distribution to ask, and inventing a number here would
+    # be a lie with a version attached.
+    __version__ = "0.0.0+unknown"
 
+#: Read from the installed distribution rather than written here, because a version
+#: written in two places is a version that will be bumped in one of them. `pyproject.toml`
+#: is the source of truth; this asks it what it said.
 __all__ = ["SarbError", "__version__"]

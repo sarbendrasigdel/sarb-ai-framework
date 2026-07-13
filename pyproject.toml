@@ -10,6 +10,8 @@ keywords = ["ai", "agents", "rag", "llm", "framework"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Private :: Do Not Upload", # PyPI rejects any package carrying this classifier.
     "Programming Language :: Python :: 3.12",
     "Typing :: Typed",
 ]

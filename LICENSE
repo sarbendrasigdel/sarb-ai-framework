@@ -1,0 +1,54 @@
+ Copyright (c) 2026 Sarbendra Sigdel. All rights reserved.
+
+PROPRIETARY AND CONFIDENTIAL
+
+This software, including its source code, documentation, configuration, and any
+accompanying materials (together, the "Software"), is the confidential and
+proprietary property of Sarbendra Sigdel (the "Owner").
+
+No license, express or implied, is granted by the mere possession of, or access
+to, the Software. Nothing in this file, and no act of disclosure, distribution,
+or publication — whether intentional or accidental — shall be construed as
+granting any such license.
+
+1. USE
+
+   The Software may be used, copied, modified, merged, and compiled only by the
+   Owner, and by those the Owner has authorised in writing. Authorised use is
+   limited to the purposes for which authorisation was given.
+
+2. DISTRIBUTION
+
+   The Software may not be distributed, published, sublicensed, sold, leased,
+   disclosed, or otherwise made available to any third party, in source or
+   compiled form, in whole or in part, without the Owner's prior written
+   permission.
+
+3. CONFIDENTIALITY
+
+   The Software is confidential. Any person granted access shall take reasonable
+   care to keep it so, and shall not disclose it to anyone not likewise
+   authorised.
+
+4. THIRD-PARTY COMPONENTS
+
+   The Software depends on third-party packages that are not covered by this
+   licence and remain subject to their own terms. Those terms govern the use and
+   redistribution of those packages, and nothing here alters them. Their licences
+   are declared in their own distributions; see `pyproject.toml` for the
+   dependencies and optional extras this project relies on.
+
+5. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+6. LIMITATION OF LIABILITY
+
+   IN NO EVENT SHALL THE OWNER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+   OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+For permissions beyond the scope of this licence, contact the Owner.
